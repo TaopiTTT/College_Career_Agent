@@ -17,7 +17,7 @@ class RadarChartWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxValue = 100.0;
+    const maxValue = 100.0;
     final chartColor = color ?? AppTheme.primaryColor;
 
     return Column(
@@ -58,7 +58,7 @@ class RadarChartWidget extends StatelessWidget {
                 width: 1,
               ),
               tickCount: 5,
-              ticksTextStyle: TextStyle(
+              ticksTextStyle: const TextStyle(
                 color: AppTheme.textSecondaryLight,
                 fontSize: 10,
               ),
@@ -96,7 +96,7 @@ class ComparisonRadarChartWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxValue = 100.0;
+    const maxValue = 100.0;
 
     return Column(
       children: [
@@ -147,7 +147,7 @@ class ComparisonRadarChartWidget extends StatelessWidget {
                 width: 1,
               ),
               tickCount: 5,
-              ticksTextStyle: TextStyle(
+              ticksTextStyle: const TextStyle(
                 color: AppTheme.textSecondaryLight,
                 fontSize: 10,
               ),

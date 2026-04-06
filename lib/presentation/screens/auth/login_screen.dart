@@ -187,7 +187,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   // 跳过登录按钮（演示用）
                   TextButton(
                     onPressed: _skipLogin,
-                    child: Text(
+                    child: const Text(
                       '跳过登录（演示模式）',
                       style: TextStyle(color: AppTheme.textSecondaryLight),
                     ),

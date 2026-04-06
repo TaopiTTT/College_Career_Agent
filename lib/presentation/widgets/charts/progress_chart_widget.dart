@@ -192,7 +192,7 @@ class BarChartWidget extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Text(
                           keys[index],
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 10,
                             color: AppTheme.textSecondaryLight,
                           ),
@@ -209,7 +209,7 @@ class BarChartWidget extends StatelessWidget {
                     getTitlesWidget: (value, meta) {
                       return Text(
                         value.toInt().toString(),
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 10,
                           color: AppTheme.textSecondaryLight,
                         ),

@@ -217,7 +217,7 @@ class _JobsHomeScreenState extends ConsumerState<JobsHomeScreen>
               // 薪资和市场需求
               Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.payments_outlined,
                     size: 18,
                     color: AppTheme.primaryColor,
@@ -263,7 +263,7 @@ class _JobsHomeScreenState extends ConsumerState<JobsHomeScreen>
                           label: Text(skill),
                           backgroundColor:
                               AppTheme.primaryColor.withOpacity(0.1),
-                          labelStyle: TextStyle(
+                          labelStyle: const TextStyle(
                             fontSize: 12,
                             color: AppTheme.primaryColor,
                           ),

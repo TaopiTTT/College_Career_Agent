@@ -271,7 +271,7 @@ class _AssessmentHomeScreenState extends ConsumerState<AssessmentHomeScreen> {
                   ],
                 ),
               ),
-              Icon(
+              const Icon(
                 Icons.chevron_right,
                 color: AppTheme.textSecondaryLight,
               ),
