@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/app_theme.dart';
 import '../../../data/models/user_model.dart';
-import '../../providers/mock_auth_provider.dart';
+import '../../providers/auth_provider.dart';
 
 /// 我的信息主页
 class ProfileHomeScreen extends ConsumerWidget {
@@ -11,8 +11,9 @@ class ProfileHomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 使用模拟数据
-    final user = ref.watch(mockUserProvider);
+    // 使用真实的认证数据
+    final authState = ref.watch(authNotifierProvider);
+    final user = authState.user;
 
     return Scaffold(
       appBar: AppBar(

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -14,17 +16,18 @@ class RegisterScreen extends ConsumerStatefulWidget {
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _nicknameController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  final _verifyCodeController = TextEditingController();
+  final _emailController = TextEditingController(text: 'test@test.com');
+  final _nicknameController = TextEditingController(text: '测试同学');
+  final _passwordController = TextEditingController(text: '1daw23456qq');
+  final _confirmPasswordController = TextEditingController(text: '1daw23456qq');
+  final _verifyCodeController = TextEditingController(text: '128182');
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
   bool _codeSent = false;
   int _countdown = 0;
+  Timer? _timer;
 
   @override
   void dispose() {
@@ -33,6 +36,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _verifyCodeController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -81,13 +85,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   void _startCountdown() {
-    Future.doWhile(() async {
-      await Future.delayed(const Duration(seconds: 1));
-      if (!mounted) return false;
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
       setState(() {
         _countdown--;
       });
-      return _countdown > 0;
+      if (_countdown <= 0) {
+        timer.cancel();
+      }
     });
   }
 

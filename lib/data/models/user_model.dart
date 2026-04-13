@@ -4,13 +4,15 @@ part 'user_model.g.dart';
 
 @JsonSerializable()
 class UserModel {
-  final int userId;
+  @JsonKey(name: 'user_id')
+  final String userId;
   final String email;
   final String nickname;
+  @JsonKey(name: 'avatar_url')
   final String? avatarUrl;
   final String role;
   @JsonKey(name: 'created_at')
-  final DateTime createdAt;
+  final DateTime? createdAt;
 
   UserModel({
     required this.userId,
@@ -18,7 +20,7 @@ class UserModel {
     required this.nickname,
     this.avatarUrl,
     required this.role,
-    required this.createdAt,
+    this.createdAt,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) =>
@@ -61,7 +63,7 @@ class RegisterRequest {
 @JsonSerializable()
 class AuthResponse {
   @JsonKey(name: 'user_id')
-  final int userId;
+  final String userId;
   final String token;
 
   AuthResponse({

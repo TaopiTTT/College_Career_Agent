@@ -43,9 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-API_DESIGN.md
-ARCHITECTURE.md
-DOCS_README.md
-FILE_STRUCTURE.md
-NO_BACKEND_MODE.md
-QUICKSTART.md
+
+/docs
+

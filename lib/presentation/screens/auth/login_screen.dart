@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/app_theme.dart';
-import '../../providers/mock_login_provider.dart';
+import '../../providers/auth_provider.dart';
 
 /// 登录界面
 class LoginScreen extends ConsumerStatefulWidget {
@@ -14,8 +14,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _emailController = TextEditingController(text: 'test@test.com');
+  final _passwordController = TextEditingController(text: '1daw23456qq');
   bool _obscurePassword = true;
 
   @override
@@ -30,7 +30,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
-    final success = await ref.read(mockLoginNotifierProvider.notifier).login(
+    final success = await ref.read(authNotifierProvider.notifier).login(
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
@@ -38,7 +38,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (success && mounted) {
       context.go('/');
     } else if (mounted) {
-      final errorMessage = ref.read(mockLoginNotifierProvider).errorMessage;
+      final errorMessage = ref.read(authNotifierProvider).errorMessage;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(errorMessage ?? '登录失败'),
@@ -48,14 +48,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  void _skipLogin() {
-    // 跳过登录，直接进入主页
-    context.go('/');
-  }
-
   @override
   Widget build(BuildContext context) {
-    final loginState = ref.watch(mockLoginNotifierProvider);
+    final authState = ref.watch(authNotifierProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundLight,
@@ -168,8 +163,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   SizedBox(
                     height: 48,
                     child: ElevatedButton(
-                      onPressed: loginState.isLoading ? null : _handleLogin,
-                      child: loginState.isLoading
+                      onPressed: authState.isLoading ? null : _handleLogin,
+                      child: authState.isLoading
                           ? const SizedBox(
                               height: 20,
                               width: 20,
@@ -182,17 +177,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           : const Text('登录', style: TextStyle(fontSize: 16)),
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  // 跳过登录按钮（演示用）
-                  TextButton(
-                    onPressed: _skipLogin,
-                    child: const Text(
-                      '跳过登录（演示模式）',
-                      style: TextStyle(color: AppTheme.textSecondaryLight),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 24),
 
                   // 注册链接
                   Row(

@@ -3,8 +3,38 @@ class AppConfig {
   /// API基础URL
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://api.example.com/api/v1',
+    defaultValue: 'http://10.0.0.95:8890/api/v1',
   );
+
+  /// auth-api 服务地址 (登录/注册/验证码)
+  ///
+  /// 开发环境可以通过设置 USE_PROXY=true 来使用本地代理服务器
+  /// 这样可以解决 Flutter Web 的 CORS 问题
+  ///
+  /// 使用代理: flutter run -d chrome --dart-define=USE_PROXY=true
+  /// 直接连接: flutter run -d chrome (默认)
+  static String get authApiUrl {
+    const useProxy = bool.fromEnvironment('USE_PROXY', defaultValue: false);
+    if (useProxy) {
+      return 'http://localhost:3000/api';
+    }
+    return const String.fromEnvironment(
+      'AUTH_API_URL',
+      defaultValue: 'http://10.0.0.95:80/api/v1',
+    );
+  }
+
+  /// career-api 服务地址 (测评/画像/岗位/匹配)
+  static String get careerApiUrl {
+    const useProxy = bool.fromEnvironment('USE_PROXY', defaultValue: false);
+    if (useProxy) {
+      return 'http://localhost:3000/career-api/api/v1';
+    }
+    return const String.fromEnvironment(
+      'CAREER_API_URL',
+      defaultValue: 'http://10.0.0.95:80/api/v1',
+    );
+  }
 
   /// 连接超时时间(毫秒)
   static const int connectTimeout = 30000;

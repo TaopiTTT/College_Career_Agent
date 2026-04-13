@@ -7,7 +7,7 @@ import '../../presentation/screens/main_screen.dart';
 /// 路由配置
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: '/',
+    initialLocation: '/auth/login',
     // TODO: 后期启用认证检查
     // redirect: (context, state) {
     //   final authState = ProviderScope.containerOf(context)

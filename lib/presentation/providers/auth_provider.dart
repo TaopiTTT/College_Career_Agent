@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../core/storage/token_storage.dart';
-import '../../core/network/dio_client.dart';
+import '../../core/network/auth_api_service.dart';
 
 /// 认证状态
 enum AuthStatus {
@@ -167,10 +167,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
 }
 
 /// Provider
-final dioClientProvider = Provider<DioClient>((ref) => DioClient());
+final authApiServiceProvider = Provider<AuthApiService>((ref) => AuthApiService());
 
 final authDataSourceProvider = Provider<AuthDataSource>((ref) {
-  return AuthDataSource(ref.watch(dioClientProvider));
+  return AuthDataSource(ref.watch(authApiServiceProvider));
 });
 
 final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>(

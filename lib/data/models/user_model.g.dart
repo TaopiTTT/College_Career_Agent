@@ -7,21 +7,23 @@ part of 'user_model.dart';
 // **************************************************************************
 
 UserModel _$UserModelFromJson(Map<String, dynamic> json) => UserModel(
-      userId: (json['userId'] as num).toInt(),
+      userId: json['user_id'] as String,
       email: json['email'] as String,
       nickname: json['nickname'] as String,
-      avatarUrl: json['avatarUrl'] as String?,
+      avatarUrl: json['avatar_url'] as String?,
       role: json['role'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      createdAt: json['created_at'] == null
+          ? null
+          : DateTime.parse(json['created_at'] as String),
     );
 
 Map<String, dynamic> _$UserModelToJson(UserModel instance) => <String, dynamic>{
-      'userId': instance.userId,
+      'user_id': instance.userId,
       'email': instance.email,
       'nickname': instance.nickname,
-      'avatarUrl': instance.avatarUrl,
+      'avatar_url': instance.avatarUrl,
       'role': instance.role,
-      'created_at': instance.createdAt.toIso8601String(),
+      'created_at': instance.createdAt?.toIso8601String(),
     };
 
 LoginRequest _$LoginRequestFromJson(Map<String, dynamic> json) => LoginRequest(
@@ -52,7 +54,7 @@ Map<String, dynamic> _$RegisterRequestToJson(RegisterRequest instance) =>
     };
 
 AuthResponse _$AuthResponseFromJson(Map<String, dynamic> json) => AuthResponse(
-      userId: (json['user_id'] as num).toInt(),
+      userId: json['user_id'] as String,
       token: json['token'] as String,
     );
 
