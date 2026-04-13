@@ -3,6 +3,17 @@ import 'package:go_router/go_router.dart';
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/auth/register_screen.dart';
 import '../../presentation/screens/main_screen.dart';
+import '../../presentation/screens/assessment/assessment_progress_screen.dart';
+import '../../presentation/screens/assessment/basic_info_screen.dart';
+import '../../presentation/screens/assessment/skills_self_assessment_screen.dart';
+import '../../presentation/screens/assessment/questionnaire_screen.dart';
+import '../../presentation/screens/assessment/profile_result_screen.dart';
+import '../../presentation/screens/assessment/profile_generation_transition_screen.dart';
+import '../../presentation/screens/assessment/assessment_home_screen.dart';
+import '../../presentation/screens/jobs/job_list_screen.dart';
+import '../../presentation/screens/jobs/job_detail_screen.dart';
+import '../../presentation/screens/matching/matching_process_screen.dart';
+import '../../presentation/screens/matching/matching_result_screen.dart';
 
 /// 路由配置
 class AppRouter {
@@ -59,6 +70,44 @@ class AppRouter {
               child: RegisterScreen(),
             ),
           ),
+          // 测评路由
+          GoRoute(
+            path: 'assessment',
+            redirect: (context, state) {
+              // /assessment 是父路由，重定向到进度页
+              final location = state.uri.toString();
+              if (location.endsWith('/assessment') || location.endsWith('/assessment/')) {
+                return '/assessment/progress';
+              }
+              return null;
+            },
+            routes: [
+              GoRoute(
+                path: 'progress',
+                pageBuilder: (context, state) => const MaterialPage(
+                  child: AssessmentProgressScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'basic-info',
+                pageBuilder: (context, state) => const MaterialPage(
+                  child: BasicInfoScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'home',
+                pageBuilder: (context, state) => const MaterialPage(
+                  child: AssessmentHomeScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'questionnaire',
+                pageBuilder: (context, state) => const MaterialPage(
+                  child: QuestionnaireScreen(),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
       // 主应用路由
@@ -105,6 +154,18 @@ class AppRouter {
                 ),
               ),
               GoRoute(
+                path: 'profile-generation',
+                pageBuilder: (context, state) => const MaterialPage(
+                  child: ProfileGenerationTransitionScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'profile-result',
+                pageBuilder: (context, state) => const MaterialPage(
+                  child: ProfileResultScreen(),
+                ),
+              ),
+              GoRoute(
                 path: 'interview',
                 pageBuilder: (context, state) => const MaterialPage(
                   child: InterviewScreen(),
@@ -116,14 +177,20 @@ class AppRouter {
           GoRoute(
             path: 'jobs',
             redirect: (context, state) {
-              // /jobs 是父路由，重定向到岗位列表（这里暂时重定向到主页）
+              // /jobs 是父路由，重定向到列表页
               final location = state.uri.toString();
               if (location.endsWith('/jobs') || location.endsWith('/jobs/')) {
-                return '/'; // 或者重定向到岗位列表页
+                return '/jobs/list';
               }
               return null;
             },
             routes: [
+              GoRoute(
+                path: 'list',
+                pageBuilder: (context, state) => const MaterialPage(
+                  child: JobListScreen(),
+                ),
+              ),
               GoRoute(
                 path: ':jobId',
                 pageBuilder: (context, state) {
@@ -141,6 +208,32 @@ class AppRouter {
                     child: JobGraphScreen(jobId: jobId),
                   );
                 },
+              ),
+            ],
+          ),
+          // 匹配相关路由
+          GoRoute(
+            path: 'matching',
+            redirect: (context, state) {
+              // /matching 是父路由，重定向到流程页
+              final location = state.uri.toString();
+              if (location.endsWith('/matching') || location.endsWith('/matching/')) {
+                return '/matching/process';
+              }
+              return null;
+            },
+            routes: [
+              GoRoute(
+                path: 'process',
+                pageBuilder: (context, state) => const MaterialPage(
+                  child: MatchingProcessScreen(),
+                ),
+              ),
+              GoRoute(
+                path: 'result',
+                pageBuilder: (context, state) => const MaterialPage(
+                  child: MatchingResultScreen(),
+                ),
               ),
             ],
           ),
@@ -213,48 +306,11 @@ class ErrorScreen extends StatelessWidget {
   }
 }
 
-/// 占位Screen - 需要后续实现
-class AssessmentProgressScreen extends StatelessWidget {
-  const AssessmentProgressScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('测评进度')));
-}
-
-class BasicInfoScreen extends StatelessWidget {
-  const BasicInfoScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('基础信息')));
-}
-
-class SkillsSelfAssessmentScreen extends StatelessWidget {
-  const SkillsSelfAssessmentScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('技能自评')));
-}
-
-class QuestionnaireScreen extends StatelessWidget {
-  const QuestionnaireScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('问卷')));
-}
-
 class InterviewScreen extends StatelessWidget {
   const InterviewScreen({super.key});
 
   @override
   Widget build(BuildContext context) => const Scaffold(body: Center(child: Text('面试')));
-}
-
-class JobDetailScreen extends StatelessWidget {
-  final String jobId;
-  const JobDetailScreen({super.key, required this.jobId});
-
-  @override
-  Widget build(BuildContext context) => Scaffold(body: Center(child: Text('岗位详情: $jobId')));
 }
 
 class JobGraphScreen extends StatelessWidget {

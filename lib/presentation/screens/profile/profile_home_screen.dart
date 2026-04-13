@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/app_theme.dart';
 import '../../../data/models/user_model.dart';
+import '../../../data/models/assessment_model.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/assessment_provider.dart';
 
 /// 我的信息主页
 class ProfileHomeScreen extends ConsumerWidget {
@@ -14,6 +16,10 @@ class ProfileHomeScreen extends ConsumerWidget {
     // 使用真实的认证数据
     final authState = ref.watch(authNotifierProvider);
     final user = authState.user;
+
+    // 监听用户画像数据
+    final userProfile = ref.watch(userProfileNotifierProvider);
+    final assessmentState = ref.watch(assessmentNotifierProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -31,11 +37,11 @@ class ProfileHomeScreen extends ConsumerWidget {
         child: Column(
           children: [
             // 用户信息卡片
-            _buildUserCard(context, user),
+            _buildUserCard(context, user, userProfile),
             const SizedBox(height: 16),
 
             // 能力画像概览
-            _buildProfileOverview(context),
+            _buildProfileOverview(context, userProfile, assessmentState),
             const SizedBox(height: 16),
 
             // 功能列表
@@ -46,7 +52,11 @@ class ProfileHomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildUserCard(BuildContext context, UserModel? user) {
+  Widget _buildUserCard(
+      BuildContext context, UserModel? user, UserProfileModel? userProfile) {
+    final basicInfo = userProfile?.basicInfo;
+    final displayName = basicInfo?.name ?? user?.nickname ?? '未登录';
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
@@ -55,7 +65,7 @@ class ProfileHomeScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.3),
+            color: AppTheme.primaryColor.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -72,7 +82,7 @@ class ProfileHomeScreen extends ConsumerWidget {
                 : null,
             child: user?.avatarUrl == null
                 ? Text(
-                    user?.nickname.substring(0, 1).toUpperCase() ?? 'U',
+                    displayName.substring(0, 1).toUpperCase(),
                     style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -88,37 +98,64 @@ class ProfileHomeScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  user?.nickname ?? '未登录',
+                  displayName,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  user?.email ?? '',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white70,
-                      ),
-                ),
+                if (basicInfo?.major != null)
+                  Text(
+                    '${basicInfo?.major} | ${basicInfo?.education}',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.white70,
+                        ),
+                  )
+                else
+                  Text(
+                    user?.email ?? '',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.white70,
+                        ),
+                  ),
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    user?.role == 'student' ? '学生' : '管理员',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.white,
+                if (basicInfo?.school != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      basicInfo!.school!,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      user?.role == 'student' ? '学生' : '管理员',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                ),
               ],
             ),
           ),
@@ -134,7 +171,24 @@ class ProfileHomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfileOverview(BuildContext context) {
+  Widget _buildProfileOverview(
+      BuildContext context,
+      UserProfileModel? userProfile,
+      AssessmentStateModel assessmentState) {
+    // 计算完整度
+    final completedSteps = assessmentState.completedSteps.values.where((v) => v).length;
+    final totalSteps = assessmentState.completedSteps.length;
+    final completeness = (completedSteps / totalSteps * 100).toInt();
+
+    // 计算竞争力分数
+    final softSkills = userProfile?.softSkills;
+    int totalScore = 0;
+    if (softSkills != null && softSkills.isNotEmpty) {
+      totalScore = softSkills.values.reduce((a, b) => a + b).toInt();
+      // 归一化到100分制 (假设满分是50分)
+      totalScore = (totalScore / 50 * 100).toInt();
+    }
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       child: Card(
@@ -168,7 +222,7 @@ class ProfileHomeScreen extends ConsumerWidget {
                     child: _buildStatCard(
                       context,
                       '完整度',
-                      '85',
+                      '$completeness',
                       '%',
                       AppTheme.primaryColor,
                     ),
@@ -178,7 +232,7 @@ class ProfileHomeScreen extends ConsumerWidget {
                     child: _buildStatCard(
                       context,
                       '竞争力',
-                      '68',
+                      '$totalScore',
                       '分',
                       AppTheme.warningColor,
                     ),
@@ -188,7 +242,7 @@ class ProfileHomeScreen extends ConsumerWidget {
               const SizedBox(height: 16),
 
               // 软能力雷达图预览
-              _buildRadarChartPreview(context),
+              _buildSoftSkillsPreview(context, userProfile),
             ],
           ),
         ),
@@ -206,7 +260,7 @@ class ProfileHomeScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -249,34 +303,91 @@ class ProfileHomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildRadarChartPreview(BuildContext context) {
-    // 这里应该使用图表库绘制雷达图
-    // 暂时使用占位符
-    return Container(
-      height: 150,
-      decoration: BoxDecoration(
-        color: AppTheme.backgroundLight,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.radar_outlined,
-              size: 48,
-              color: AppTheme.primaryColor.withOpacity(0.5),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '软能力雷达图',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.textSecondaryLight,
-                  ),
-            ),
-          ],
+  Widget _buildSoftSkillsPreview(
+      BuildContext context, UserProfileModel? userProfile) {
+    final softSkills = userProfile?.softSkills;
+
+    if (softSkills == null || softSkills.isEmpty) {
+      return Container(
+        height: 150,
+        decoration: BoxDecoration(
+          color: AppTheme.backgroundLight,
+          borderRadius: BorderRadius.circular(12),
         ),
-      ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.radar_outlined,
+                size: 48,
+                color: AppTheme.primaryColor.withValues(alpha: 0.5),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '完成问卷后查看能力画像',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppTheme.textSecondaryLight,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // 显示软技能列表
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '软能力评估',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+        const SizedBox(height: 12),
+        ...softSkills.entries.map((entry) {
+          final category = entry.key;
+          final score = entry.value.toInt();
+          final maxScore = 10; // 假设每个维度满分是10分
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      category,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    Text(
+                      '$score/$maxScore',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: score / maxScore,
+                    backgroundColor: Colors.grey.shade200,
+                    valueColor: const AlwaysStoppedAnimation(AppTheme.primaryColor),
+                    minHeight: 6,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
     );
   }
 
