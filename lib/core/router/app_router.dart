@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../presentation/providers/auth_provider.dart';
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/auth/register_screen.dart';
 import '../../presentation/screens/main_screen.dart';
@@ -19,25 +21,26 @@ import '../../presentation/screens/matching/matching_result_screen.dart';
 class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: '/auth/login',
-    // TODO: 后期启用认证检查
-    // redirect: (context, state) {
-    //   final authState = ProviderScope.containerOf(context)
-    //       .read(authNotifierProvider);
-    //
-    //   // 检查是否需要认证
-    //   final isAuthRoute = state.matchedLocation.startsWith('/auth') ||
-    //       state.matchedLocation == '/splash';
-    //
-    //   if (!authState.isAuthenticated && !isAuthRoute) {
-    //     return '/auth/login';
-    //   }
-    //
-    //   if (authState.isAuthenticated && isAuthRoute) {
-    //     return '/';
-    //   }
-    //
-    //   return null;
-    // },
+    redirect: (context, state) {
+      final authState = ProviderScope.containerOf(context)
+          .read(authNotifierProvider);
+
+      // 检查是否需要认证
+      final isAuthRoute = state.matchedLocation.startsWith('/auth') ||
+          state.matchedLocation == '/splash';
+
+      // 未认证且访问受保护路由，重定向到登录页
+      if (!authState.isAuthenticated && !isAuthRoute) {
+        return '/auth/login';
+      }
+
+      // 已认证且访问认证路由，重定向到首页
+      if (authState.isAuthenticated && isAuthRoute) {
+        return '/';
+      }
+
+      return null;
+    },
     routes: [
       // 启动页
       GoRoute(

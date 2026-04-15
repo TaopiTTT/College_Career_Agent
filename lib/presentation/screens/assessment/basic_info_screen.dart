@@ -38,6 +38,42 @@ class _BasicInfoScreenState extends ConsumerState<BasicInfoScreen> {
     '志愿者',
   ];
 
+  bool _isLoading = true;
+  bool _hasLoadedData = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedData();
+  }
+
+  /// 加载已保存的基础信息
+  Future<void> _loadSavedData() async {
+    final savedInfo = await LocalStorageService.getBasicInfo();
+    if (savedInfo != null) {
+      setState(() {
+        _nameController.text = savedInfo.name ?? '';
+        _gender = savedInfo.gender;
+        _birthDate = savedInfo.birthDate;
+        _education = savedInfo.education;
+        _majorController.text = savedInfo.major ?? '';
+        _schoolController.text = savedInfo.school ?? '';
+        _graduationYear = savedInfo.graduationYear;
+        _phoneController.text = savedInfo.phone ?? '';
+        if (savedInfo.tags != null) {
+          _tags.clear();
+          _tags.addAll(savedInfo.tags!);
+        }
+        _hasLoadedData = true;
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -71,18 +107,11 @@ class _BasicInfoScreenState extends ConsumerState<BasicInfoScreen> {
       tags: _toList(_tags),
     );
 
-    // 更新用户画像
+    // 更新用户画像（会自动保存到本地存储）
     ref.read(userProfileNotifierProvider.notifier).updateBasicInfo(basicInfo);
 
-    // 保存基础信息到本地
-    await LocalStorageService.saveBasicInfo(basicInfo);
-
-    // 标记步骤为完成
+    // 标记步骤为完成（会自动保存评估状态）
     ref.read(assessmentNotifierProvider.notifier).completeStep(AssessmentStep.basicInfo);
-
-    // 保存评估状态到本地
-    final assessmentState = ref.read(assessmentNotifierProvider);
-    await LocalStorageService.saveAssessmentState(assessmentState);
 
     // 跳转到问卷页面
     if (mounted) {
@@ -126,80 +155,86 @@ class _BasicInfoScreenState extends ConsumerState<BasicInfoScreen> {
           ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 进度条
-              _buildProgressBar(),
-              const SizedBox(height: 24),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 已加载数据提示
+                    if (_hasLoadedData) _buildLoadedDataHint(),
+                    // 进度条
+                    _buildProgressBar(),
+                    const SizedBox(height: 24),
 
-              // 基本信息表单
-              _buildSectionTitle('基本信息'),
-              const SizedBox(height: 16),
-              _buildNameField(),
-              const SizedBox(height: 16),
-              _buildGenderField(),
-              const SizedBox(height: 16),
-              _buildBirthDateField(),
-              const SizedBox(height: 24),
+                    // 基本信息表单
+                    _buildSectionTitle('基本信息'),
+                    const SizedBox(height: 16),
+                    _buildNameField(),
+                    const SizedBox(height: 16),
+                    _buildGenderField(),
+                    const SizedBox(height: 16),
+                    _buildBirthDateField(),
+                    const SizedBox(height: 24),
 
-              // 学业信息表单
-              _buildSectionTitle('学业信息'),
-              const SizedBox(height: 16),
-              _buildEducationField(),
-              const SizedBox(height: 16),
-              _buildMajorField(),
-              const SizedBox(height: 16),
-              _buildSchoolField(),
-              const SizedBox(height: 16),
-              _buildGraduationYearField(),
-              const SizedBox(height: 24),
+                    // 学业信息表单
+                    _buildSectionTitle('学业信息'),
+                    const SizedBox(height: 16),
+                    _buildEducationField(),
+                    const SizedBox(height: 16),
+                    _buildMajorField(),
+                    const SizedBox(height: 16),
+                    _buildSchoolField(),
+                    const SizedBox(height: 16),
+                    _buildGraduationYearField(),
+                    const SizedBox(height: 24),
 
-              // 联系方式
-              _buildSectionTitle('联系方式'),
-              const SizedBox(height: 16),
-              _buildPhoneField(),
-              const SizedBox(height: 24),
+                    // 联系方式
+                    _buildSectionTitle('联系方式'),
+                    const SizedBox(height: 16),
+                    _buildPhoneField(),
+                    const SizedBox(height: 24),
 
-              // 个人标签
-              _buildSectionTitle('个人标签'),
-              const SizedBox(height: 16),
-              _buildTagsField(),
-              const SizedBox(height: 32),
+                    // 个人标签
+                    _buildSectionTitle('个人标签'),
+                    const SizedBox(height: 16),
+                    _buildTagsField(),
+                    const SizedBox(height: 32),
 
-              // 提交按钮
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: _saveAndContinue,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    // 提交按钮
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: _saveAndContinue,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          _hasLoadedData ? '更新并继续' : '保存并继续',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  child: const Text(
-                    '保存并继续',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                    const SizedBox(height: 16),
+                    // 添加底部间距，避免内容被底部导航栏遮挡
+                    const SizedBox(height: 80),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              // 添加底部间距，避免内容被底部导航栏遮挡
-              const SizedBox(height: 80),
-            ],
-          ),
-        ),
-      ),
+            ),
       bottomNavigationBar: const AssessmentBottomNav(currentStep: 1),
     );
   }
@@ -237,6 +272,40 @@ class _BasicInfoScreenState extends ConsumerState<BasicInfoScreen> {
             fontWeight: FontWeight.bold,
             color: AppTheme.primaryColor,
           ),
+    );
+  }
+
+  Widget _buildLoadedDataHint() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppTheme.primaryColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline,
+            color: AppTheme.primaryColor,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '已加载您上次保存的信息，您可以修改后继续',
+              style: TextStyle(
+                color: AppTheme.primaryColor,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

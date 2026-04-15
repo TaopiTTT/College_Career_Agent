@@ -65,10 +65,16 @@ class AuthResponse {
   @JsonKey(name: 'user_id')
   final String userId;
   final String token;
+  @JsonKey(name: 'refresh_token')
+  final String? refreshToken;
+  @JsonKey(name: 'expires_in')
+  final int? expiresIn;
 
   AuthResponse({
     required this.userId,
     required this.token,
+    this.refreshToken,
+    this.expiresIn,
   });
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) =>

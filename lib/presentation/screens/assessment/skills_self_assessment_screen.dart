@@ -35,6 +35,42 @@ class _SkillsSelfAssessmentScreenState
   // 当前显示的分类
   String? _selectedCategory;
 
+  bool _isLoading = true;
+  bool _hasLoadedData = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedSkills();
+  }
+
+  /// 加载已保存的技能
+  Future<void> _loadSavedSkills() async {
+    final savedSkills = await LocalStorageService.getSkills();
+    if (savedSkills != null && savedSkills.isNotEmpty) {
+      setState(() {
+        for (var skill in savedSkills) {
+          final category = skill.category;
+          final name = skill.name;
+          final proficiency = skill.proficiency;
+
+          if (category != null && name != null && proficiency != null) {
+            if (!_selectedSkills.containsKey(category)) {
+              _selectedSkills[category] = {};
+            }
+            _selectedSkills[category]![name] = proficiency;
+          }
+        }
+        _hasLoadedData = true;
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -57,21 +93,26 @@ class _SkillsSelfAssessmentScreenState
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // 分类Tab
-          _buildCategoryTabs(),
-          const Divider(height: 1),
-          // 技能列表
-          Expanded(
-            child: _selectedCategory != null
-                ? _buildSkillsGrid(_selectedCategory!)
-                : _buildEmptyState(),
-          ),
-          // 底部操作栏
-          _buildBottomBar(),
-        ],
-      ),
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : Column(
+              children: [
+                if (_hasLoadedData) _buildLoadedDataHint(),
+                // 分类Tab
+                _buildCategoryTabs(),
+                const Divider(height: 1),
+                // 技能列表
+                Expanded(
+                  child: _selectedCategory != null
+                      ? _buildSkillsGrid(_selectedCategory!)
+                      : _buildEmptyState(),
+                ),
+                // 底部操作栏
+                _buildBottomBar(),
+              ],
+            ),
     );
   }
 
@@ -330,6 +371,9 @@ class _SkillsSelfAssessmentScreenState
       });
     });
 
+    // 保存技能列表到本地
+    await LocalStorageService.saveSkills(skills);
+
     // 更新用户画像
     ref.read(userProfileNotifierProvider.notifier).updateSkills(skills);
 
@@ -341,6 +385,10 @@ class _SkillsSelfAssessmentScreenState
     // 标记步骤为完成
     ref.read(assessmentNotifierProvider.notifier).completeStep(AssessmentStep.skills);
 
+    // 保存评估状态
+    final assessmentState = ref.read(assessmentNotifierProvider);
+    await LocalStorageService.saveAssessmentState(assessmentState);
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -351,6 +399,40 @@ class _SkillsSelfAssessmentScreenState
       // 返回进度页面
       context.pop();
     }
+  }
+
+  Widget _buildLoadedDataHint() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppTheme.primaryColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline,
+            color: AppTheme.primaryColor,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '已加载您上次保存的技能信息',
+              style: TextStyle(
+                color: AppTheme.primaryColor,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

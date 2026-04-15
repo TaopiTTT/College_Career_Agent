@@ -9,6 +9,55 @@ class LocalStorageService {
   static const String _assessmentStateKey = 'assessment_state';
   static const String _userProfileKey = 'user_profile';
   static const String _questionnaireAnswersKey = 'questionnaire_answers';
+  static const String _skillsKey = 'user_skills';
+  static const String _userCredentialsKey = 'user_credentials'; // 新增：用户登录凭据
+
+  /// 保存用户登录凭据（记住密码功能）
+  static Future<void> saveUserCredentials({
+    required String email,
+    required String password,
+    bool rememberPassword = false,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final credentials = {
+        'email': email,
+        'password': rememberPassword ? password : '',
+        'rememberPassword': rememberPassword,
+        'lastLoginTime': DateTime.now().toIso8601String(),
+      };
+      final jsonString = jsonEncode(credentials);
+      await prefs.setString(_userCredentialsKey, jsonString);
+      debugPrint('✅ 用户登录凭据已保存');
+    } catch (e) {
+      debugPrint('❌ 保存用户登录凭据失败: $e');
+    }
+  }
+
+  /// 获取用户登录凭据
+  static Future<Map<String, dynamic>?> getUserCredentials() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString(_userCredentialsKey);
+      if (jsonString != null) {
+        return jsonDecode(jsonString) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('❌ 读取用户登录凭据失败: $e');
+    }
+    return null;
+  }
+
+  /// 清除用户登录凭据
+  static Future<void> clearUserCredentials() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_userCredentialsKey);
+      debugPrint('✅ 用户登录凭据已清除');
+    } catch (e) {
+      debugPrint('❌ 清除用户登录凭据失败: $e');
+    }
+  }
 
   /// 保存基础信息
   static Future<void> saveBasicInfo(BasicInfoModel basicInfo) async {
@@ -33,6 +82,35 @@ class LocalStorageService {
       }
     } catch (e) {
       debugPrint('❌ 读取基础信息失败: $e');
+    }
+    return null;
+  }
+
+  /// 保存技能列表
+  static Future<void> saveSkills(List<SkillModel> skills) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = jsonEncode(skills.map((s) => s.toJson()).toList());
+      await prefs.setString(_skillsKey, jsonString);
+      debugPrint('✅ 技能列表已保存到本地');
+    } catch (e) {
+      debugPrint('❌ 保存技能列表失败: $e');
+    }
+  }
+
+  /// 获取技能列表
+  static Future<List<SkillModel>?> getSkills() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonString = prefs.getString(_skillsKey);
+      if (jsonString != null) {
+        final jsonList = jsonDecode(jsonString) as List;
+        return jsonList
+            .map((json) => SkillModel.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+    } catch (e) {
+      debugPrint('❌ 读取技能列表失败: $e');
     }
     return null;
   }
@@ -170,6 +248,8 @@ class LocalStorageService {
       await prefs.remove(_assessmentStateKey);
       await prefs.remove(_userProfileKey);
       await prefs.remove(_questionnaireAnswersKey);
+      await prefs.remove(_skillsKey);
+      await prefs.remove(_userCredentialsKey);
       debugPrint('✅ 所有本地数据已清除');
     } catch (e) {
       debugPrint('❌ 清除数据失败: $e');

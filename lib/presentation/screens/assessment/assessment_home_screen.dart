@@ -2,15 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/app_theme.dart';
+import '../../../core/storage/local_storage_service.dart';
 import '../../../data/models/assessment_model.dart';
 import '../../providers/assessment_provider.dart';
 
 /// 职业能力测评主页
-class AssessmentHomeScreen extends ConsumerWidget {
+class AssessmentHomeScreen extends ConsumerStatefulWidget {
   const AssessmentHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AssessmentHomeScreen> createState() =>
+      _AssessmentHomeScreenState();
+}
+
+class _AssessmentHomeScreenState extends ConsumerState<AssessmentHomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _loadAssessmentState();
+  }
+
+  /// 加载已保存的评估状态
+  Future<void> _loadAssessmentState() async {
+    final savedState = await LocalStorageService.getAssessmentState();
+    if (savedState != null) {
+      // 需要通过正确的方式更新状态
+      // 由于AssessmentNotifier没有直接的setState方法，我们需要重新创建状态
+      // 这里我们暂时不更新，因为AssessmentNotifier在初始化时会自动加载
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final assessmentState = ref.watch(assessmentNotifierProvider);
 
     return Scaffold(

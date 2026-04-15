@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -51,19 +52,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// 初始化 - 检查登录状态
   Future<void> _init() async {
+    debugPrint('🔄 AuthNotifier: 开始初始化...');
+    state = state.copyWith(status: AuthStatus.loading);
+
     final isLoggedIn = await _tokenStorage.isLoggedIn();
-    if (isLoggedIn) {
-      try {
-        final user = await _authDataSource.getCurrentUser();
-        state = state.copyWith(
-          status: AuthStatus.authenticated,
-          user: user,
-        );
-      } catch (e) {
-        // Token可能已过期
-        state = state.copyWith(status: AuthStatus.unauthenticated);
-      }
-    } else {
+
+    if (!isLoggedIn) {
+      debugPrint('❌ AuthNotifier: 用户未登录');
+      state = state.copyWith(status: AuthStatus.unauthenticated);
+      return;
+    }
+
+    try {
+      debugPrint('✅ AuthNotifier: Token有效，获取用户信息...');
+      // Token存在且未过期，尝试验证并获取用户信息
+      final user = await _authDataSource.getCurrentUser();
+      debugPrint('✅ AuthNotifier: 用户信息获取成功 - ${user.nickname}');
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        user: user,
+      );
+    } catch (e) {
+      // Token验证失败（可能被服务器撤销等），清除本地数据
+      debugPrint('❌ AuthNotifier: 获取用户信息失败 - $e');
+      await _tokenStorage.clearTokens();
       state = state.copyWith(status: AuthStatus.unauthenticated);
     }
   }
@@ -158,6 +170,34 @@ class AuthNotifier extends StateNotifier<AuthState> {
       status: AuthStatus.unauthenticated,
       user: null,
     );
+  }
+
+  /// 尝试自动刷新Token
+  Future<bool> tryRefreshToken() async {
+    final refreshToken = await _tokenStorage.getRefreshToken();
+    if (refreshToken == null) return false;
+
+    try {
+      await _authDataSource.refreshToken(refreshToken);
+
+      // 获取用户信息
+      final user = await _authDataSource.getCurrentUser();
+
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        user: user,
+      );
+
+      return true;
+    } catch (e) {
+      // 刷新失败，清除所有Token
+      await _tokenStorage.clearTokens();
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        user: null,
+      );
+      return false;
+    }
   }
 
   /// 清除错误消息

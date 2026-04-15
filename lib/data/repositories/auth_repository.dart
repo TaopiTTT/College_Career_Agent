@@ -20,10 +20,11 @@ class AuthDataSource {
 
       final authResponse = AuthResponse.fromJson(response);
 
-      // 保存Token
+      // 保存Token，优先使用服务器返回的过期时间，否则默认7天
       await _tokenStorage.saveToken(
         token: authResponse.token,
-        expiresIn: 7 * 24 * 60 * 60, // 7天
+        refreshToken: authResponse.refreshToken,
+        expiresIn: authResponse.expiresIn ?? (7 * 24 * 60 * 60), // 默认7天
       );
 
       return authResponse;
@@ -42,10 +43,11 @@ class AuthDataSource {
 
       final authResponse = AuthResponse.fromJson(response);
 
-      // 保存Token
+      // 保存Token，优先使用服务器返回的过期时间，否则默认7天
       await _tokenStorage.saveToken(
         token: authResponse.token,
-        expiresIn: 7 * 24 * 60 * 60,
+        refreshToken: authResponse.refreshToken,
+        expiresIn: authResponse.expiresIn ?? (7 * 24 * 60 * 60), // 默认7天
       );
 
       return authResponse;
@@ -71,6 +73,29 @@ class AuthDataSource {
     try {
       final response = await _authApiService.get<Map<String, dynamic>>('/user/me');
       return UserModel.fromJson(response);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  /// 刷新Token
+  Future<AuthResponse> refreshToken(String refreshToken) async {
+    try {
+      final response = await _authApiService.post<Map<String, dynamic>>(
+        '/auth/refresh',
+        data: {'refresh_token': refreshToken},
+      );
+
+      final authResponse = AuthResponse.fromJson(response);
+
+      // 保存新Token
+      await _tokenStorage.saveToken(
+        token: authResponse.token,
+        refreshToken: authResponse.refreshToken ?? refreshToken,
+        expiresIn: authResponse.expiresIn ?? (7 * 24 * 60 * 60), // 默认7天
+      );
+
+      return authResponse;
     } on DioException catch (e) {
       throw _handleError(e);
     }

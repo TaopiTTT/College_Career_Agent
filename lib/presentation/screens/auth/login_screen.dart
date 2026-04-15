@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/app_theme.dart';
+import '../../../core/storage/local_storage_service.dart';
 import '../../providers/auth_provider.dart';
 
 /// 登录界面
@@ -14,9 +15,34 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'test@test.com');
-  final _passwordController = TextEditingController(text: '1daw23456qq');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _rememberPassword = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  /// 加载保存的登录凭据
+  Future<void> _loadSavedCredentials() async {
+    final credentials = await LocalStorageService.getUserCredentials();
+    if (credentials != null) {
+      setState(() {
+        _emailController.text = credentials['email'] ?? '';
+        _passwordController.text = credentials['password'] ?? '';
+        _rememberPassword = credentials['rememberPassword'] ?? false;
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -36,6 +62,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         );
 
     if (success && mounted) {
+      // 保存登录凭据
+      await LocalStorageService.saveUserCredentials(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        rememberPassword: _rememberPassword,
+      );
       context.go('/');
     } else if (mounted) {
       final errorMessage = ref.read(authNotifierProvider).errorMessage;
@@ -144,6 +176,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       }
                       return null;
                     },
+                  ),
+                  const SizedBox(height: 8),
+
+                  // 记住密码
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: _rememberPassword,
+                        onChanged: (value) {
+                          setState(() {
+                            _rememberPassword = value ?? false;
+                          });
+                        },
+                      ),
+                      const Text('记住密码'),
+                    ],
                   ),
                   const SizedBox(height: 8),
 

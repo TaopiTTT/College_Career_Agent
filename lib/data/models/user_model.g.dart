@@ -56,12 +56,16 @@ Map<String, dynamic> _$RegisterRequestToJson(RegisterRequest instance) =>
 AuthResponse _$AuthResponseFromJson(Map<String, dynamic> json) => AuthResponse(
       userId: json['user_id'] as String,
       token: json['token'] as String,
+      refreshToken: json['refresh_token'] as String?,
+      expiresIn: (json['expires_in'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$AuthResponseToJson(AuthResponse instance) =>
     <String, dynamic>{
       'user_id': instance.userId,
       'token': instance.token,
+      'refresh_token': instance.refreshToken,
+      'expires_in': instance.expiresIn,
     };
 
 SendCodeRequest _$SendCodeRequestFromJson(Map<String, dynamic> json) =>

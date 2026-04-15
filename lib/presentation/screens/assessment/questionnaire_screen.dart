@@ -23,6 +23,27 @@ class _QuestionnaireScreenState extends ConsumerState<QuestionnaireScreen> {
   final Map<String, int> _answers = {};
   final List<QuestionModel> _questions = _getQuestions();
   bool _isLoading = false;
+  bool _hasLoadedData = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedAnswers();
+  }
+
+  /// 加载已保存的问卷答案
+  Future<void> _loadSavedAnswers() async {
+    final savedAnswers = await LocalStorageService.getQuestionnaireAnswers();
+    if (savedAnswers != null && savedAnswers['answers'] != null) {
+      setState(() {
+        final answersMap = savedAnswers['answers'] as Map<String, dynamic>;
+        answersMap.forEach((key, value) {
+          _answers[key] = value as int;
+        });
+        _hasLoadedData = true;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -231,6 +252,8 @@ class _QuestionnaireScreenState extends ConsumerState<QuestionnaireScreen> {
       ),
       body: Column(
         children: [
+          // 已加载数据提示
+          if (_hasLoadedData) _buildLoadedDataHint(),
           // 进度条
           _buildProgressBar(progress),
           Expanded(
@@ -267,6 +290,40 @@ class _QuestionnaireScreenState extends ConsumerState<QuestionnaireScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildLoadedDataHint() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: AppTheme.primaryColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline,
+            color: AppTheme.primaryColor,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '已加载您上次保存的答案',
+              style: TextStyle(
+                color: AppTheme.primaryColor,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
